@@ -66,7 +66,7 @@ class MovieRecommender:
 
         self._prepare_tfidf()
 
-        def _load_api_key(self):
+    def _load_api_key(self):
         """Load TMDB API key from file"""
         try:
             with open(API_KEY_FILE, "r") as f:
@@ -76,7 +76,6 @@ class MovieRecommender:
                 f"Error: {API_KEY_FILE} not found. Please create this file with your TMDB API key."
             )
             return "YOUR_API_KEY_HERE"  # Placeholder for testing
-
 
     def _load_data(self):
         """Load movie data from JSON file"""

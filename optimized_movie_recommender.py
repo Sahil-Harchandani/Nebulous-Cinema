@@ -67,11 +67,15 @@ class MovieRecommender:
         self._prepare_tfidf()
 
         def _load_api_key(self):
-        """Load TMDB API key from environment variable"""
-        api_key = os.getenv("TMDB_API_KEY")
-        if not api_key:
-            raise ValueError("TMDB_API_KEY environment variable not set.")
-        return api_key
+        """Load TMDB API key from file"""
+        try:
+            with open(API_KEY_FILE, "r") as f:
+                return f.read().strip()
+        except FileNotFoundError:
+            print(
+                f"Error: {API_KEY_FILE} not found. Please create this file with your TMDB API key."
+            )
+            return "YOUR_API_KEY_HERE"  # Placeholder for testing
 
 
     def _load_data(self):

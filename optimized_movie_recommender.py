@@ -18,14 +18,16 @@ import random
 from functools import lru_cache
 from concurrent.futures import ThreadPoolExecutor
 
-# Set custom download directory
-NLTK_DIR = "/tmp/nltk_data"
-nltk.data.path.append(NLTK_DIR)
+# Set custom NLTK data path for compatibility with Render
+NLTK_DATA_PATH = "/tmp/nltk_data"
+os.makedirs(NLTK_DATA_PATH, exist_ok=True)
+nltk.data.path.append(NLTK_DATA_PATH)
 
-# Download required models if not already present
-nltk.download("punkt", download_dir=NLTK_DIR, quiet=True)
-nltk.download("wordnet", download_dir=NLTK_DIR, quiet=True)
-nltk.download("stopwords", download_dir=NLTK_DIR, quiet=True)
+# Download NLTK resources (safe even if repeated)
+nltk.download("punkt", download_dir=NLTK_DATA_PATH, quiet=True)
+nltk.download("punkt_tab", download_dir=NLTK_DATA_PATH, quiet=True)
+nltk.download("wordnet", download_dir=NLTK_DATA_PATH, quiet=True)
+nltk.download("stopwords", download_dir=NLTK_DATA_PATH, quiet=True)
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes

@@ -8,30 +8,30 @@
 
 ---
 
-## 🌟 Features
+## Features
 
-- 🔍 **Smart Search**: Find movies by title, actor, genre, director, or keywords
-- 🎲 **Random Picks**: Infinite scroll browsing with surprise selections
-- 🎬 **Watch Trailers**: Launch trailers via YouTube integration
-- 🧠 **AI Recommendations**: Based on TF-IDF & NLP vector similarity
-- 🧩 **Movie Details**: Cast, genres, ratings, overview & more
-- 🔐 **Secure Backend**: All TMDB calls are server-side, your key stays hidden
+-  **Smart Search**: Find movies by title, actor, genre, director, or keywords
+-  **Random Picks**: Infinite scroll browsing with surprise selections
+-  **Watch Trailers**: Launch trailers via YouTube integration
+-  **AI Recommendations**: Based on TF-IDF & NLP vector similarity
+-  **Movie Details**: Cast, genres, ratings, overview & more
+-  **Secure Backend**: All TMDB calls are server-side, your key stays hidden
 
 ---
 
-## 🚀 Try It Now
+## Try It Now
 
 Here's a quick look at Nebulous Cinema in action:
 
   ![Screenshot 2025-04-19 203050](https://github.com/user-attachments/assets/41d76e86-ccfc-4e6a-b986-40c6250ee4c3)
 
-> 🌐 You can deploy it instantly using the button below:
+>  You can deploy it instantly using the button below:
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
 
 ---
 
-## 🔐 Render Secret File Setup
+##  Render Secret File Setup
 
 After deployment, go to your **Render Dashboard**, then:
 
@@ -43,7 +43,7 @@ After deployment, go to your **Render Dashboard**, then:
 
 ---
 
-## 🧠 Tech Stack
+##  Tech Stack
 
 | Layer      | Tech Used                      |
 |------------|--------------------------------|
@@ -55,7 +55,7 @@ After deployment, go to your **Render Dashboard**, then:
 
 ---
 
-## 📦 Project Structure
+##  Project Structure
 
 ```
 nebulous-cinema/
@@ -72,7 +72,7 @@ nebulous-cinema/
 
 ---
 
-## 💻 Local Development
+##  Local Development
 
 ```bash
 # Clone the repo
@@ -95,7 +95,7 @@ python app.py
 
 ---
 
-## 📸 Screenshots
+##  Screenshots
 
  ![Screenshot 2025-04-19 203225](https://github.com/user-attachments/assets/f6263411-0dde-4d2b-90f5-1108091e1aec)
 
@@ -103,24 +103,24 @@ python app.py
 
 ---
 
-## 📄 License
+##  License
 
 Licensed under the **GNU General Public License v3.0**.
 
 > You are free to use, modify, and distribute the project as long as derived works are also open-source under GPL-3.
 
-📖 See the full [LICENSE](LICENSE) file for details.
+ See the full [LICENSE](LICENSE) file for details.
 
 ---
 
-## 🤝 Contributing
+##  Contributing
 
 Pull requests and ideas are welcome!  
 Have an idea for a feature or improvement? Open an issue or fork the repo.
 
 ---
 
-## 🙌 Credits
+##  Credits
 
 - [TMDB](https://www.themoviedb.org/) — Movie data API  
 - [NLTK](https://www.nltk.org/) — Natural Language Toolkit  
@@ -128,6 +128,6 @@ Have an idea for a feature or improvement? Open an issue or fork the repo.
 
 ---
 
-## ⭐ Like the project?
+##  Like the project?
 
 Star ⭐ the repo, share it, and help others discover **Nebulous Cinema** — the AI-powered movie matcher!

@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nebulous Cinema | Movie Recommender</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <link rel="stylesheet" href="../static/css/styles.css">
+    <script src="../static/js/script.js"></script>
+    <style>
+        :root {
+            --primary-color: #7209b7;
+            --secondary-color: #3a0ca3;
+            --accent-color: #f72585;
+            --dark-color: #1a1a2e;
+            --light-color: #f8f9fa;
+            --gradient: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        
+        .navbar {
+            background: var(--gradient);
+            padding: 1rem 0;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+        }
+        
+        .navbar-brand .logo-accent {
+            color: var(--accent-color);
+        }
+        
+        .navbar-dark .navbar-nav .nav-link {
+            color: rgba(255,255,255,0.8);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        .navbar-dark .navbar-nav .nav-link:hover,
+        .navbar-dark .navbar-nav .nav-link.active {
+            color: #fff;
+        }
+        
+        .search-section {
+            background: var(--gradient);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2.5rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .search-section::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('https://api.placeholder.com/1600/900') center/cover;
+            opacity: 0.2;
+            z-index: 0;
+        }
+        
+        .search-section .container {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .search-section h2 {
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            margin-bottom: 1.5rem;
+        }
+        
+        .search-input-container {
+            background: rgba(255,255,255,0.95);
+            border-radius: 50px;
+            padding: 0.5rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        }
+        
+        #search-input {
+            border: none;
+            border-radius: 50px;
+            padding-left: 1.5rem;
+            height: 50px;
+            font-size: 1.1rem;
+            box-shadow: none;
+            background: transparent;
+        }
+        
+        #search-input:focus {
+            box-shadow: none;
+        }
+        
+        #search-btn {
+            border-radius: 50px;
+            padding: 0.5rem 1.5rem;
+            background-color: var(--accent-color);
+            border: none;
+            font-weight: 600;
+            height: 50px;
+            transition: all 0.3s;
+        }
+        
+        #search-btn:hover {
+            background-color: #e5106f;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .content-section {
+            padding: 2rem 0;
+        }
+        
+        .section-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--dark-color);
+            position: relative;
+            padding-bottom: 0.5rem;
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: var(--accent-color);
+        }
+        
+        .movie-card {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            height: 100%;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            background-color: white;
+        }
+        
+        .movie-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 20px rgba(0,0,0,0.2);
+        }
+        
+        .movie-card .card-img-wrapper {
+            position: relative;
+            overflow: hidden;
+            height: 350px;
+        }
+        
+        .movie-poster {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+        
+        .movie-card:hover .movie-poster {
+            transform: scale(1.05);
+        }
+        
+        .movie-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            color: white;
+            padding: 1.5rem 1rem 1rem;
+            transform: translateY(0);
+            transition: transform 0.3s;
+        }
+        
+        .movie-card:hover .movie-info {
+            transform: translateY(-10px);
+        }
+        
+        .movie-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        
+        .movie-year-genre {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .language-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            z-index: 10;
+        }
+        
+        .badge-hollywood {
+            background-color: #4361ee;
+            color: white;
+        }
+        
+        .badge-bollywood {
+            background-color: #f72585;
+            color: white;
+        }
+        
+        .film-loader {
+            width: 64px;
+            height: 64px;
+            margin: 20px auto;
+            border-radius: 50%;
+            perspective: 800px;
+        }
+        
+        .film-loader .circle {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            animation: pulse 1.2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(0.7);
+                opacity: 0.5;
+            }
+            50% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        
+        /* Modal Styles */
+        .modal-content {
+            border-radius: 15px;
+            overflow: hidden;
+            border: none;
+        }
+        
+        .modal-header {
+            background: var(--gradient);
+            color: white;
+            border: none;
+            padding: 1.5rem;
+        }
+        
+        .modal-title {
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        
+        .btn-close {
+            background-color: white;
+            opacity: 0.8;
+        }
+        
+        .modal-body {
+            padding: 2rem;
+        }
+        
+        .movie-detail-img {
+            border-radius: 10px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        
+        .movie-detail-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        
+        .movie-detail-info {
+            margin-bottom: 0.5rem;
+        }
+        
+        .movie-detail-info strong {
+            color: var(--dark-color);
+        }
+        
+        .overview-section {
+            margin-top: 1.5rem;
+        }
+        
+        .overview-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 0.75rem;
+        }
+        
+        .modal-footer {
+            padding: 1rem 2rem;
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+        
+        #show-recommendations {
+            background-color: var(--primary-color);
+            border: none;
+            font-weight: 600;
+        }
+        
+        #show-recommendations:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .filter-btn.active {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+        
+        .filter-btn {
+            transition: all 0.3s;
+        }
+        
+        .footer {
+            background-color: var(--dark-color);
+            color: white;
+            padding: 2rem 0;
+            margin-top: 3rem;
+        }
+        
+        .footer-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+        }
+        
+        .footer-text {
+            opacity: 0.8;
+            line-height: 1.6;
+        }
+        
+        .footer-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .footer-links li {
+            margin-bottom: 0.75rem;
+        }
+        
+        .footer-links a {
+            color: white;
+            opacity: 0.8;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+        
+        .footer-links a:hover {
+            opacity: 1;
+        }
+        
+        .social-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            gap: 15px;
+        }
+        
+        .social-links li a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            color: white;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+        }
+        
+        .social-links li a:hover {
+            background-color: var(--accent-color);
+            transform: translateY(-3px);
+        }
+        
+        .copyright {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            text-align: center;
+            padding-top: 2rem;
+            margin-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        /* Responsive Adjustments */
+        @media (max-width: 991.98px) {
+            .search-section {
+                padding: 2rem 0;
+            }
+            
+            .movie-card .card-img-wrapper {
+                height: 280px;
+            }
+        }
+        
+        @media (max-width: 767.98px) {
+            .search-section h2 {
+                font-size: 1.5rem;
+            }
+            
+            .movie-detail-img {
+                margin-bottom: 1.5rem;
+            }
+        }
+        
+        @media (max-width: 575.98px) {
+            .search-input-container {
+                border-radius: 12px;
+            }
+            
+            #search-input {
+                border-radius: 12px;
+                padding-left: 1rem;
+            }
+            
+            #search-btn {
+                border-radius: 12px;
+                margin-top: 0.5rem;
+                width: 100%;
+            }
+            
+            .film-loader {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .movie-card .card-img-wrapper {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-film me-2"></i>
+                <span>Nebulous</span> <span class="logo-accent">Cinema</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="all-movies">All Movies</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="hollywood-filter">Hollywood</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="bollywood-filter">Bollywood</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="search-section">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 col-md-10">
+                    <h2 class="text-center">Discover Your Perfect Movie</h2>
+                    <div class="search-input-container">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="search-input" placeholder="Search for movies by title, actor, director, genre...">
+                            <button class="btn btn-primary" id="search-btn">
+                                <i class="fas fa-search me-2"></i>Search
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container content-section">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="section-title mb-0" id="results-title">Popular Movies</h3>
+            <div class="btn-group">
+                <button id="filter-all" class="btn btn-sm btn-outline-primary filter-btn active">All</button>
+                <button id="filter-hollywood" class="btn btn-sm btn-outline-primary filter-btn">Hollywood</button>
+                <button id="filter-bollywood" class="btn btn-sm btn-outline-primary filter-btn">Bollywood</button>
+            </div>
+        </div>
+        
+        <div class="row g-4" id="movie-results">
+            <div class="col-12 text-center py-5">
+                <div class="film-loader">
+                    <div class="circle"></div>
+                </div>
+                <p class="mt-3 text-muted">Loading movies...</p>
+            </div>
+        </div>
+        
+        <div class="recommendations mt-5" style="display: none;">
+            <h3 class="section-title">You May Also Like</h3>
+            <div class="row g-4" id="recommendations-container">
+                <!-- Recommendations will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <div class="footer-logo">
+                        <i class="fas fa-film me-2"></i>
+                        Nebulous Cinema
+                    </div>
+                    <p class="footer-text">
+                        A powerful movie recommendation system that helps you discover the best movies from Hollywood and Bollywood based on your preferences.
+                    </p>
+                </div>
+                <div class="col-md-4 col-lg-2 mb-4 mb-md-0">
+                    <h5 class="mb-3">Explore</h5>
+                    <ul class="footer-links">
+                        <li><a href="#">All Movies</a></li>
+                        <li><a href="#">Hollywood</a></li>
+                        <li><a href="#">Bollywood</a></li>
+                        <li><a href="#">Latest Releases</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4 col-lg-2 mb-4 mb-md-0">
+                    <h5 class="mb-3">Links</h5>
+                    <ul class="footer-links">
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Contact</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4 col-lg-4">
+                    <h5 class="mb-3">Connect With Us</h5>
+                    <ul class="social-links">
+                        <li><a href="#"><i class="fab fa-facebook-f"></i></a></li>
+                        <li><a href="#"><i class="fab fa-twitter"></i></a></li>
+                        <li><a href="#"><i class="fab fa-instagram"></i></a></li>
+                        <li><a href="#"><i class="fab fa-github"></i></a></li>
+                        <li><a href="#"><i class="fab fa-linkedin-in"></i></a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                &copy; 2025 Nebulous Cinema. Created by <strong>Sahil Harchandani</strong>. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Movie Details Modal -->
+    <div class="modal fade" id="movieModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="movieModalTitle">Movie Title</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="movieModalBody">
+                    <!-- Movie details will be loaded here -->
+                    <div class="text-center py-4">
+                        <div class="film-loader">
+                            <div class="circle"></div>
+                        </div>
+                        <p class="mt-3 text-muted">Loading details...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="show-recommendations">
+                        <i class="fas fa-film me-2"></i>Show Similar Movies
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Current state
+        let currentMovieId = null;
+        let currentLanguage = null;
+        
+        // DOM elements
+        const searchInput = document.getElementById('search-input');
+        const searchBtn = document.getElementById('search-btn');
+        const movieResults = document.getElementById('movie-results');
+        const resultsTitle = document.getElementById('results-title');
+        const recommendationsSection = document.querySelector('.recommendations');
+        const recommendationsContainer = document.getElementById('recommendations-container');
+        const showRecommendationsBtn = document.getElementById('show-recommendations');
+        const movieModal = new bootstrap.Modal(document.getElementById('movieModal'));
+        
+        // Filter buttons
+        const allMoviesNav = document.getElementById('all-movies');
+        const hollywoodFilterNav = document.getElementById('hollywood-filter');
+        const bollywoodFilterNav = document.getElementById('bollywood-filter');
+        
+        const filterAll = document.getElementById('filter-all');
+        const filterHollywood = document.getElementById('filter-hollywood');
+        const filterBollywood = document.getElementById('filter-bollywood');
+        
+        // Filter button click handlers
+        function setupFilterButtons() {
+            // Navbar filters
+            allMoviesNav.addEventListener('click', function(e) {
+                e.preventDefault();
+                currentLanguage = null;
+                updateActiveFilters();
+                resultsTitle.textContent = 'All Movies';
+                fetchRandomMovies(12);
+            });
+            
+            hollywoodFilterNav.addEventListener('click', function(e) {
+                e.preventDefault();
+                currentLanguage = 'en';
+                updateActiveFilters();
+                resultsTitle.textContent = 'Hollywood Movies';
+                fetchRandomMovies(12, 'en');
+            });
+            
+            bollywoodFilterNav.addEventListener('click', function(e) {
+                e.preventDefault();
+                currentLanguage = 'hi';
+                updateActiveFilters();
+                resultsTitle.textContent = 'Bollywood Movies';
+                fetchRandomMovies(12, 'hi');
+            });
+            
+            // Button group filters
+            filterAll.addEventListener('click', function() {
+                currentLanguage = null;
+                updateActiveFilters();
+                resultsTitle.textContent = 'All Movies';
+                fetchRandomMovies(12);
+            });
+            
+            filterHollywood.addEventListener('click', function() {
+                currentLanguage = 'en';
+                updateActiveFilters();
+                resultsTitle.textContent = 'Hollywood Movies';
+                fetchRandomMovies(12, 'en');
+            });
+            
+            filterBollywood.addEventListener('click', function() {
+                currentLanguage = 'hi';
+                updateActiveFilters();
+                resultsTitle.textContent = 'Bollywood Movies';
+                fetchRandomMovies(12, 'hi');
+            });
+        }
+        
+        function updateActiveFilters() {
+            // Update navbar filters
+            allMoviesNav.classList.remove('active');
+            hollywoodFilterNav.classList.remove('active');
+            bollywoodFilterNav.classList.remove('active');
+            
+            // Update button group filters
+            filterAll.classList.remove('active');
+            filterHollywood.classList.remove('active');
+            filterBollywood.classList.remove('active');
+            
+            if (currentLanguage === 'en') {
+                hollywoodFilterNav.classList.add('active');
+                filterHollywood.classList.add('active');
+            } else if (currentLanguage === 'hi') {
+                bollywoodFilterNav.classList.add('active');
+                filterBollywood.classList.add('active');
+            } else {
+                allMoviesNav.classList.add('active');
+                filterAll.classList.add('active');
+            }
+        }
+        
+        // Search functionality
+        searchBtn.addEventListener('click', performSearch);
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+        
+        // Show recommendations button
+        showRecommendationsBtn.addEventListener('click', function() {
+            if (currentMovieId) {
+                fetchRecommendations(currentMovieId);
+                movieModal.hide();
+                
+                // Scroll to recommendations after a short delay
+                setTimeout(() => {
+                    recommendationsSection.scrollIntoView({ behavior: 'smooth' });
+                }, 300);
+            }
+        });
+        
+        function performSearch() {
+            const query = searchInput.value.trim();
+            if (query) {
+                resultsTitle.textContent = `Search Results for "${query}"`;
+                showLoading(movieResults);
+                
+                // Hide recommendations when searching
+                recommendationsSection.style.display = 'none';
+                
+                fetch(`/api/search?query=${encodeURIComponent(query)}&limit=20&language=${currentLanguage || ''}`)
+                    .then(response => response.json())
+                    .then(movies => {
+                        displayMovies(movies, movieResults);
+                    })
+                    .catch(error => {
+                        console.error('Error searching movies:', error);
+                        showError(movieResults, 'Error searching movies. Please try again.');
+                    });
+            }
+        }
+        
+        function fetchRandomMovies(limit, language) {
+            showLoading(movieResults);
+            
+            // Hide recommendations when loading random movies
+            recommendationsSection.style.display = 'none';
+            
+            fetch(`/api/random?limit=${limit}&language=${language || ''}`)
+                .then(response => response.json())
+                .then(movies => {
+                    displayMovies(movies, movieResults);
+                })
+                .catch(error => {
+                    console.error('Error fetching random movies:', error);
+                    showError(movieResults, 'Error loading movies. Please try again.');
+                });
+        }
+        
+        function fetchRecommendations(movieId) {
+            showLoading(recommendationsContainer);
+            recommendationsSection.style.display = 'block';
+            
+            fetch(`/api/recommend?movie_id=${movieId}&limit=8&language=${currentLanguage || ''}`)
+                .then(response => response.json())
+                .then(movies => {
+                    if (movies.error) {
+                        showError(recommendationsContainer, movies.error);
+                    } else {
+                        displayMovies(movies, recommendationsContainer);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching recommendations:', error);
+                    showError(recommendationsContainer, 'Error loading recommendations. Please try again.');
+                });
+        }
+        
+        function showLoading(container) {
+            container.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <div class="film-loader">
+                        <div class="circle"></div>
+                    </div>
+                    <p class="mt-3 text-muted">Loading movies...</p>
+                </div>
+            `;
+        }
+        
+        function showError(container, message) {
+            container.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                    <p class="mt-3 text-muted">${message}</p>
+                </div>
+            `;
+        }
+        
+        function displayMovies(movies, container) {
+            if (!movies || movies.length === 0) {
+                showError(container, 'No movies found. Try a different search or filter.');
+                return;
+            }
+            
+            let html = '';
+            
+            movies.forEach(movie => {
+                const genres = movie.genres && movie.genres.length > 0 
+                    ? movie.genres.slice(0, 2).join(', ') 
+                    : 'Not specified';
+                    
+                const releaseYear = movie.release_date 
+                    ? movie.release_date.substring(0, 4) 
+                    : 'Unknown';
+                
+                const languageBadge = movie.language === 'hi' 
+                    ? '<span class="language-badge badge-bollywood">Bollywood</span>' 
+                    : '<span class="language-badge badge-hollywood">Hollywood</span>';
+                
+                html += `
+                    <div class="col-sm-6 col-md-4 col-lg-3">
+                        <div class="movie-card" data-movie-id="${movie.id}">
+                            <div class="card-img-wrapper">
+                                ${languageBadge}
+                                <img src="https://api.placeholder.com/300x450/7209b7/ffffff?text=${encodeURIComponent(movie.title)}" class="movie-poster" alt="${movie.title}">
+                                <div class="movie-info">
+                                    <h5 class="movie-title">${movie.title}</h5>
+                                    <p class="movie-year-genre mb-0">${releaseYear} | ${genres}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            
+            // Add click event to each movie card
+            document.querySelectorAll('.movie-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    const movieId = this.getAttribute('data-movie-id');
+                    showMovieDetails(movieId);
+                });
+            });
+        }
+        
+        function showMovieDetails(movieId) {
+            currentMovieId = movieId;
+            
+            const modalTitle = document.getElementById('movieModalTitle');
+            const modalBody = document.getElementById('movieModalBody');
+            
+            // Show loading state
+            modalTitle.textContent = 'Loading...';
+            modalBody.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="film-loader">
+                        <div class="circle"></div>
+                    </div>
+                    <p class="mt-3 text-muted">Loading details...</p>
+                </div>
+            `;
+            
+            // Open modal first for better UX
+            movieModal.show();
+            
+            fetch(`/api/movie/${movieId}`)
+                .then(response => response.json())
+                .then(movie => {
+                    if (movie.error) {
+                        modalBody.innerHTML = `
+                            <div class="text-center py-4">
+                                <i class="fas fa-exclamation-triangle text-warning"
+<div class="text-center py-4">
+                                <i class="fas fa-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                                <p class="mt-3 text-muted">${movie.error}</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    modalTitle.textContent = movie.title;
+                    
+                    const genres = movie.genres && movie.genres.length > 0 
+                        ? movie.genres.join(', ') 
+                        : 'Not specified';
+                        
+                    const releaseYear = movie.release_date 
+                        ? movie.release_date.substring(0, 4) 
+                        : 'Unknown';
+                        
+                    const runtime = movie.runtime 
+                        ? `${movie.runtime} min` 
+                        : 'Not specified';
+                        
+                    const directors = movie.directors && movie.directors.length > 0 
+                        ? movie.directors.join(', ') 
+                        : 'Not specified';
+                        
+                    const cast = movie.cast && movie.cast.length > 0 
+                        ? movie.cast.slice(0, 5).join(', ') 
+                        : 'Not specified';
+                        
+                    const rating = movie.rating 
+                        ? movie.rating.toFixed(1) 
+                        : 'N/A';
+                        
+                    modalBody.innerHTML = `
+                        <div class="row">
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <img src="https://api.placeholder.com/300x450/7209b7/ffffff?text=${encodeURIComponent(movie.title)}" class="img-fluid movie-detail-img" alt="${movie.title}">
+                            </div>
+                            <div class="col-md-8">
+                                <h3 class="movie-detail-title">${movie.title}</h3>
+                                <p class="movie-detail-info"><strong>Year:</strong> ${releaseYear}</p>
+                                <p class="movie-detail-info"><strong>Runtime:</strong> ${runtime}</p>
+                                <p class="movie-detail-info"><strong>Genre:</strong> ${genres}</p>
+                                <p class="movie-detail-info"><strong>Director:</strong> ${directors}</p>
+                                <p class="movie-detail-info"><strong>Cast:</strong> ${cast}</p>
+                                <p class="movie-detail-info"><strong>Rating:</strong> 
+                                    <span class="badge bg-${rating >= 7 ? 'success' : rating >= 5 ? 'warning' : 'danger'}">${rating}</span>
+                                </p>
+                                <p class="movie-detail-info"><strong>Language:</strong> 
+                                    ${movie.language === 'hi' ? 'Hindi (Bollywood)' : 'English (Hollywood)'}
+                                </p>
+                                
+                                <div class="overview-section">
+                                    <h4 class="overview-title">Overview</h4>
+                                    <p>${movie.overview || 'No overview available.'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                })
+                .catch(error => {
+                    console.error('Error fetching movie details:', error);
+                    modalBody.innerHTML = `
+                        <div class="text-center py-4">
+                            <i class="fas fa-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                            <p class="mt-3 text-muted">Error loading movie details. Please try again later.</p>
+                        </div>
+                    `;
+                });
+        }
+        
+        // Initialize the application
+        function init() {
+            setupFilterButtons();
+            updateActiveFilters();
+            fetchRandomMovies(12);
+        }
+        
+        // Start the app when DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>                                

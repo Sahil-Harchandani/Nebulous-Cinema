@@ -38,16 +38,16 @@ API_KEY_FILE = "tmdb_api_key.txt"
 TMDB_BASE_URL = "https://api.themoviedb.org/3"
 
 # Updated target counts - focusing only on Hollywood and Bollywood
-HOLLYWOOD_COUNT = 8000  # Increased count
-BOLLYWOOD_COUNT = 2000  # Increased count
+HOLLYWOOD_COUNT = 100  # Increase count on deployement
+BOLLYWOOD_COUNT = 300  # Increase count on deployement
 
 # Total target count
 TARGET_MOVIE_COUNT = HOLLYWOOD_COUNT + BOLLYWOOD_COUNT
 
 # Constants for optimized fetching
-MAX_THREADS = 5
-CACHE_SIZE = 1000
-BATCH_SIZE = 20  # Process movies in batches
+MAX_THREADS = 3 #Default: 5
+#CACHE_SIZE = 1000 *Uncomment to improve performance
+BATCH_SIZE = 10  # Process movies in batches
 
 
 class MovieRecommender:

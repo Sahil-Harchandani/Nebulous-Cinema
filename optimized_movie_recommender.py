@@ -46,8 +46,8 @@ TARGET_MOVIE_COUNT = HOLLYWOOD_COUNT + BOLLYWOOD_COUNT
 
 # Constants for optimized fetching
 MAX_THREADS = 3 #Default: 5
-#CACHE_SIZE = 1000 *Uncomment to improve performance
-BATCH_SIZE = 10  # Process movies in batches
+CACHE_SIZE = 50 #Default: 1000
+BATCH_SIZE = 10  # Process movies in batches, Default: 20
 
 
 class MovieRecommender:

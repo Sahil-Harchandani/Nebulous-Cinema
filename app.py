@@ -58,5 +58,9 @@ def api_recommend():
     same_lang = [m for m in recommender.movies if m.get('language') == movie.get('language') and m['id'] != movie_id]
     return jsonify(random.sample(same_lang, min(limit, len(same_lang))))
 
+import os
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5500))  # default for local
+    app.run(host='0.0.0.0', port=port)
+

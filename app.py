@@ -21,20 +21,50 @@ def api_random():
     movies = [movie for movie in recommender.movies if not lang or movie.get("language") == lang]
     return jsonify(random.sample(movies, min(limit, len(movies))))
 
-@app.route('/api/search')
-def api_search():
-    query = request.args.get('query', '')
-    limit = int(request.args.get('limit', 10))
-    lang = request.args.get('language', None)
+@app.route("/api/search")
+def search_movies():
+    """API endpoint for searching movies with advanced NLP"""
+    query = request.args.get("query", "").strip()
+    limit = int(request.args.get("limit", 10))
+    language = request.args.get("language", None)
+    
+    if not query:
+        return jsonify(recommender._get_random_recommendations(limit, language))
+    
+    try:
+        # Use search_movies_enhanced instead of trying to parse the query separately
+        results = recommender.search_movies_enhanced(query, limit, language)
+        return jsonify(results)
+    except Exception as e:
+        print(f"Error during search: {str(e)}")
+        return jsonify({"error": f"Search failed: {str(e)}"}), 500
+
+    # ✅ Use the actual recommender instance
+    query_info = recommender._parse_query(query)
+    print("[DEBUG] Parsed Query Info:", query_info)
+
+    clean_query = query_info.get("clean_query") or query
+    print("[DEBUG] Semantic query used:", clean_query)
+
+    try:
+        query_embedding = recommender.model.encode(clean_query, convert_to_tensor=True)
+        cos_scores = util.pytorch_cos_sim(query_embedding, recommender.embeddings["full"])[0]
+    except Exception as e:
+        print("[ERROR] NLP embedding/search failed:", e)
+        return jsonify([])
+
+    top_indices = cos_scores.argsort(descending=True)
 
     results = []
-    for movie in recommender.movies:
-        if lang and movie.get('language') != lang:
+    for idx in top_indices:
+        movie = recommender.movies[idx]
+        if language and movie.get("language") != language:
             continue
-        if query.lower() in movie.get('title', '').lower():
-            results.append(movie)
+        results.append(movie)
         if len(results) >= limit:
             break
+
+    print(f"[DEBUG] Found {len(results)} semantic matches for: {query}")
     return jsonify(results)
 
 @app.route('/api/movie/<int:movie_id>')
@@ -57,8 +87,6 @@ def api_recommend():
 
     same_lang = [m for m in recommender.movies if m.get('language') == movie.get('language') and m['id'] != movie_id]
     return jsonify(random.sample(same_lang, min(limit, len(same_lang))))
-
-import os
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5500))  # default for local

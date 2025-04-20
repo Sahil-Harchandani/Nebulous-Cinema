@@ -41,14 +41,14 @@ API_KEY_FILE = "tmdb_api_key.txt"
 TMDB_BASE_URL = "https://api.themoviedb.org/3"
 
 # Updated target counts - focusing only on Hollywood and Bollywood
-HOLLYWOOD_COUNT = 8000  # Increase count on deployement
-BOLLYWOOD_COUNT = 2000  # Increase count on deployement
+HOLLYWOOD_COUNT = 15000  # Increase count on deployement
+BOLLYWOOD_COUNT = 20000  # Increase count on deployement
 
 # Total target count
 TARGET_MOVIE_COUNT = HOLLYWOOD_COUNT + BOLLYWOOD_COUNT
 
 # Constants for optimized fetching
-MAX_THREADS = 5 #Default: 5
+MAX_THREADS = 12 #Default: 5
 CACHE_SIZE = 1000 #Default: 1000
 BATCH_SIZE = 20  # Process movies in batches, Default: 20
 
@@ -77,14 +77,16 @@ class MovieRecommender:
         self._prepare_tfidf()
 
     def _load_api_key(self):
-        """Load TMDB API key from a mounted file (Render Secret File)"""
-        api_key_path = "/etc/secrets/tmdb_api_key"
+        """Load TMDB API key from file"""
         try:
-            with open(api_key_path, "r") as f:
+            with open(API_KEY_FILE, "r") as f:
                 return f.read().strip()
         except FileNotFoundError:
-            raise ValueError(f"API key file not found at {api_key_path}")
-            
+            print(
+                f"Error: {API_KEY_FILE} not found. Please create this file with your TMDB API key."
+            )
+            return "YOUR_API_KEY_HERE"  # Placeholder for testing
+
     def _load_data(self):
         """Load movie data from JSON file"""
         print("Loading existing movie data...")

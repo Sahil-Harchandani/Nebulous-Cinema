@@ -89,4 +89,5 @@ def api_recommend():
     return jsonify(random.sample(same_lang, min(limit, len(same_lang))))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5500))  # default for local
+    app.run(host='0.0.0.0', port=port)

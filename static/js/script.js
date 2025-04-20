@@ -319,34 +319,20 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     function performSearch() {
         const query = searchInput.value.trim();
-        
-        // Don't search if query is empty
-        if (!query) {
-            showToast('Please enter a search term');
-            return;
-        }
-        
-        // Skip if same as last search
-        if (query === lastSearchQuery) {
-            return;
-        }
-        
+        if (!query) return;
+    
         lastSearchQuery = query;
         resultsTitle.textContent = `Search Results for "${query}"`;
         showLoading(movieResults);
-        
-        // Reset pagination when starting a new search
+    
+        // Reset pagination
         currentPage = 1;
-        
-        // Hide recommendations when searching
         recommendationsSection.style.display = 'none';
-        
-        fetch(`/api/search?query=${encodeURIComponent(query)}&limit=${moviesPerPage}&language=${currentLanguage || ''}&page=${currentPage}`)
+    
+        fetch(`/api/search?query=${encodeURIComponent(query)}&limit=${moviesPerPage}&language=${currentLanguage || ''}`)
             .then(handleResponse)
             .then(movies => {
                 displayMovies(movies, movieResults, false);
-                
-                // Show no results message if needed
                 if (!movies || movies.length === 0) {
                     showNoResults(movieResults, query);
                 }
@@ -355,7 +341,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error searching movies:', error);
                 showError(movieResults, 'Error searching movies. Please try again.');
             });
-    }
+    }    
     
     /**
      * Show a toast notification
@@ -664,7 +650,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="movie-card" data-movie-id="${movie.id}">
                         <div class="card-img-wrapper">
                             ${languageBadge}
-                            ${ratingBadge}
                             <img src="${posterUrl}" class="movie-poster" alt="${movie.title}" loading="lazy">
                             <div class="movie-info">
                                 <h5 class="movie-title">${movie.title}</h5>
@@ -812,29 +797,24 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="col-md-8">
                             <h4 class="movie-detail-title">${movie.title} <span class="text-muted">(${releaseYear})</span></h4>
                             
-                            <div class="details-grid mt-3">
-                                <div class="detail-item">
-                                    <label>Genre</label>
-                                    <span>${genres}</span>
-                                </div>
-                                <div class="detail-item">
-                                    <label>Director</label>
-                                    <span>${directors}</span>
-                                </div>
-                                <div class="detail-item">
-                                    <label>Cast</label>
-                                    <span>${cast}</span>
-                                </div>
-                                <div class="detail-item">
-                                    <label>Runtime</label>
-                                    <span>${runtime}</span>
-                                </div>
-                                <div class="detail-item">
-                                    <label>Language</label>
-                                    <span>${movie.language === 'hi' ? 'Hindi (Bollywood)' : 'English (Hollywood)'}</span>
-                                </div>
+                        <div class="details-grid mt-3">
+                            <div class="detail-item">
+                                <strong>Genre:&nbsp;</strong> <span>${genres}</span>
                             </div>
-                            
+                            <div class="detail-item">
+                                <strong>Director:&nbsp;</strong> <span>${movie.director || 'Unknown'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <strong>Cast:&nbsp;</strong> <span>${cast}</span>
+                            </div>
+                            <div class="detail-item">
+                                <strong>Runtime:&nbsp;</strong> <span>${runtime}</span>
+                            </div>
+                            <div class="detail-item">
+                                <strong>Language:&nbsp;</strong> <span>${movie.language === 'hi' ? 'Hindi (Bollywood)' : 'English (Hollywood)'}</span>
+                            </div>
+                        </div>
+
                             <div class="overview-section mt-4">
                                 <h5 class="overview-title">Overview</h5>
                                 <p>${movie.overview || 'No overview available for this movie.'}</p>

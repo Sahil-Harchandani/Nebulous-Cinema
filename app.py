@@ -3,6 +3,7 @@ from flask_cors import CORS
 import random
 import json
 import os
+from sentence_transformers import util
 from optimized_movie_recommender import MovieRecommender
 
 app = Flask(__name__)

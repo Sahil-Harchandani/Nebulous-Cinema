@@ -826,7 +826,7 @@ class MovieRecommender:
 
         # Create TF-IDF matrix
         self.vectorizer = TfidfVectorizer(
-            max_features=5000
+            max_features=1000
         )  # Limit features for memory efficiency
         self.tfidf_matrix = self.vectorizer.fit_transform(preprocessed_docs)
         print(f"TF-IDF matrix shape: {self.tfidf_matrix.shape}")

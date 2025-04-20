@@ -17,6 +17,9 @@ from datetime import datetime
 import random
 from functools import lru_cache
 from concurrent.futures import ThreadPoolExecutor
+from functools import lru_cache
+import difflib
+from collections import defaultdict
 
 # Set custom NLTK data path for compatibility with Render
 NLTK_DATA_PATH = "/tmp/nltk_data"
@@ -38,16 +41,16 @@ API_KEY_FILE = "tmdb_api_key.txt"
 TMDB_BASE_URL = "https://api.themoviedb.org/3"
 
 # Updated target counts - focusing only on Hollywood and Bollywood
-HOLLYWOOD_COUNT = 100  # Increase count on deployement
-BOLLYWOOD_COUNT = 300  # Increase count on deployement
+HOLLYWOOD_COUNT = 8000  # Increase count on deployement
+BOLLYWOOD_COUNT = 2000  # Increase count on deployement
 
 # Total target count
 TARGET_MOVIE_COUNT = HOLLYWOOD_COUNT + BOLLYWOOD_COUNT
 
 # Constants for optimized fetching
-MAX_THREADS = 3 #Default: 5
-CACHE_SIZE = 50 #Default: 1000
-BATCH_SIZE = 10  # Process movies in batches, Default: 20
+MAX_THREADS = 5 #Default: 5
+CACHE_SIZE = 1000 #Default: 1000
+BATCH_SIZE = 20  # Process movies in batches, Default: 20
 
 
 class MovieRecommender:
@@ -57,6 +60,7 @@ class MovieRecommender:
         self.vectorizer = None
         self.api_key = self._load_api_key()
         self.unique_movie_ids = set()  # To track unique movies
+        self._search_cache = {}  # Cache for search results
 
         # Load existing data or fetch new data
         if os.path.exists(DATA_FILE):
@@ -80,7 +84,7 @@ class MovieRecommender:
                 return f.read().strip()
         except FileNotFoundError:
             raise ValueError(f"API key file not found at {api_key_path}")
-
+            
     def _load_data(self):
         """Load movie data from JSON file"""
         print("Loading existing movie data...")
@@ -747,9 +751,11 @@ class MovieRecommender:
                 actors = credits.get("cast", [])
 
                 for person in crew:
-                    if person.get("job") == "Director":
-                        director = person.get("name", "")
+                    job = person.get("job", "").lower().strip()
+                    if job == "director":
+                        director = person.get("name", "").strip()
                         break
+
 
                 for actor in actors[:10]:  # Get top 10 cast
                     if actor.get("name"):
@@ -777,6 +783,8 @@ class MovieRecommender:
                     "language": original_language,
                     "document": document,
                     "poster_path": data.get("poster_path", None),
+                    "vote_average": data.get("vote_average"),
+                    "runtime": data.get("runtime"),
 
                 }
 
@@ -826,54 +834,314 @@ class MovieRecommender:
         print(f"TF-IDF matrix shape: {self.tfidf_matrix.shape}")
 
     def search_movies(self, query, limit=10, language=None):
-        """Search movies based on text query with optional language filter"""
+        """
+        Enhanced search with genre, mood, and common term understanding
+        """
         if not query:
             return self._get_random_recommendations(limit, language)
-
-        # Preprocess the query
+        
+        # Extract genre, mood, and other search patterns
+        genre_match = self._extract_genre(query)
+        mood_match = self._extract_mood(query)
+        actor_match = self._extract_actor(query)
+        decade_match = self._extract_decade(query)
+        
+        # Log what was detected (for debugging)
+        detections = []
+        if genre_match: detections.append(f"Genre: {genre_match}")
+        if mood_match: detections.append(f"Mood: {mood_match}")
+        if actor_match: detections.append(f"Actor: {actor_match}")
+        if decade_match: detections.append(f"Decade: {decade_match}")
+        
+        if detections:
+            print(f"Search query '{query}' detected: {', '.join(detections)}")
+        
+        # Apply spelling correction
+        corrected_query = self._correct_movie_terms(query)
+        if corrected_query != query:
+            print(f"Corrected query: '{query}' to '{corrected_query}'")
+            query = corrected_query
+        
+        # Expand query with synonyms and additional terms
+        expanded_query = self._expand_query(query)
+        
+        # Clean common prefixes like "show me", "recommend", etc.
+        cleaned_query = self._clean_search_prefixes(expanded_query)
+        
+        # Process the query with NLTK
         stop_words = set(stopwords.words("english"))
         lemmatizer = WordNetLemmatizer()
-
+        
         # Clean and tokenize the query
-        query = re.sub(r"[^\w\s]", "", query.lower())
-        tokens = word_tokenize(query)
+        cleaned_query = re.sub(r"[^\w\s]", "", cleaned_query.lower())
+        tokens = word_tokenize(cleaned_query)
         processed_tokens = [
             lemmatizer.lemmatize(token)
             for token in tokens
             if token.isalpha() and token not in stop_words
         ]
         processed_query = " ".join(processed_tokens)
-
+        
         # Transform query to the same vector space
         query_vector = self.vectorizer.transform([processed_query])
-
+        
         # Calculate similarity with all movies
         sim_scores = cosine_similarity(query_vector, self.tfidf_matrix).flatten()
-
+        
+        # Apply boosting based on detected patterns
+        sim_scores = self._boost_scores_by_patterns(
+            sim_scores, genre_match, mood_match, actor_match, decade_match
+        )
+        
         # Get movie indices with highest similarity
         movie_indices = sim_scores.argsort()[::-1]
-
+        
         # Apply language filter if specified
         results = []
         count = 0
-
+        
         for idx in movie_indices:
             movie = self.movies[idx]
             # Apply language filter if specified
             if language and movie.get("language") != language:
                 continue
-
+            
             # Add similarity score to movie data
             movie_with_score = movie.copy()
             movie_with_score["similarity"] = float(sim_scores[idx])
-
+            
             results.append(movie_with_score)
             count += 1
-
+            
             if count >= limit:
                 break
-
+        
         return results
+
+    def _boost_scores_by_patterns(self, scores, genre=None, mood=None, actor=None, decade=None):
+        """Boost similarity scores based on detected patterns"""
+        boosted_scores = scores.copy()
+        
+        for idx, movie in enumerate(self.movies):
+            boost_factor = 1.0
+            
+            # Boost by genre
+            if genre and genre.lower() in [g.lower() for g in movie.get("genres", [])]:
+                boost_factor += 0.5
+            
+            # Boost by mood (check for mood terms in overview and keywords)
+            if mood:
+                movie_text = " ".join([
+                    movie.get("overview", ""),
+                    " ".join(movie.get("keywords", []))
+                ]).lower()
+                
+                # Check if the mood appears in movie text
+                if mood.lower() in movie_text:
+                    boost_factor += 0.3
+                
+                # Check keywords associated with the mood
+                mood_keywords = self._get_mood_keywords(mood)
+                for keyword in mood_keywords:
+                    if keyword in movie_text:
+                        boost_factor += 0.1
+                        break
+            
+            # Boost by actor
+            if actor and actor.lower() in [cast.lower() for cast in movie.get("cast", [])]:
+                boost_factor += 0.4
+            
+            # Boost by decade
+            if decade and movie.get("release_date", ""):
+                try:
+                    year = int(movie["release_date"].split("-")[0])
+                    if (year // 10) * 10 == decade:
+                        boost_factor += 0.3
+                except (ValueError, IndexError):
+                    pass
+            
+            # Apply boost
+            boosted_scores[idx] *= boost_factor
+        
+        return boosted_scores
+
+    def _extract_genre(self, query):
+        """Extract genre information from the query"""
+        # List of common genres
+        genres = [
+            "action", "adventure", "animation", "comedy", "crime", "documentary", 
+            "drama", "family", "fantasy", "history", "horror", "music", "mystery",
+            "romance", "science fiction", "sci-fi", "thriller", "war", "western"
+        ]
+        
+        # Check for genre patterns like "action movies" or "show me comedy"
+        for genre in genres:
+            pattern = rf"\b{re.escape(genre)}\b"
+            if re.search(pattern, query.lower()):
+                return genre
+        
+        return None
+
+    def _extract_mood(self, query):
+        """Extract mood information from the query"""
+        # Map of moods and associated patterns
+        mood_patterns = {
+            "happy": [r"\bhappy\b", r"\bfeel good\b", r"\bfeel-good\b", r"\buplifting\b", r"\blight hearted\b"],
+            "sad": [r"\bsad\b", r"\btearjerker\b", r"\bheartbreaking\b", r"\bmelancholy\b"],
+            "scary": [r"\bscary\b", r"\bfrightening\b", r"\bcreepy\b", r"\bhorror\b", r"\bterrifying\b"],
+            "tense": [r"\btense\b", r"\bsuspenseful\b", r"\bthriller\b", r"\banxiety\b"],
+            "funny": [r"\bfunny\b", r"\bhilarious\b", r"\bcomedy\b", r"\blaugh\b"],
+            "inspirational": [r"\binspirational\b", r"\bmotivational\b", r"\binspiring\b"],
+            "romantic": [r"\bromantic\b", r"\bromance\b", r"\blove story\b"],
+            "thought-provoking": [r"\bthought provoking\b", r"\bphilosophical\b", r"\bdeep\b", r"\bintellectual\b"]
+        }
+        
+        # Check for mood patterns
+        for mood, patterns in mood_patterns.items():
+            for pattern in patterns:
+                if re.search(pattern, query.lower()):
+                    return mood
+        
+        return None
+
+    def _get_mood_keywords(self, mood):
+        """Return keywords associated with a particular mood"""
+        mood_keywords = {
+            "happy": ["uplifting", "cheerful", "joyful", "optimistic", "fun", "heartwarming"],
+            "sad": ["tragic", "melancholy", "grief", "depression", "emotional", "heartbreaking"],
+            "scary": ["horror", "terror", "nightmare", "creepy", "haunting", "frightening", "supernatural"],
+            "tense": ["suspense", "thriller", "anxiety", "adrenaline", "intense", "psychological"],
+            "funny": ["comedy", "laugh", "humorous", "gag", "joke", "silly", "parody", "satire"],
+            "inspirational": ["triumph", "overcome", "motivational", "journey", "victory", "success"],
+            "romantic": ["love", "romance", "relationship", "passion", "dating", "marriage"],
+            "thought-provoking": ["philosophical", "deep", "contemplative", "existential", "meaningful"]
+        }
+        
+        return mood_keywords.get(mood.lower(), [])
+
+    def _extract_actor(self, query):
+        """Extract actor information from the query"""
+        # Simple pattern matching for "with [actor]" or "[actor] movies"
+        actor_patterns = [
+            r"with\s+([A-Z][a-z]+\s+[A-Z][a-z]+)",  # "with Tom Hanks"
+            r"starring\s+([A-Z][a-z]+\s+[A-Z][a-z]+)",  # "starring Brad Pitt"
+            r"([A-Z][a-z]+\s+[A-Z][a-z]+)\s+movies",  # "Leonardo DiCaprio movies"
+        ]
+        
+        for pattern in actor_patterns:
+            match = re.search(pattern, query)
+            if match:
+                return match.group(1)
+        
+        return None
+
+    def _extract_decade(self, query):
+        """Extract decade information from the query"""
+        # Match patterns like "80s movies", "1990s films", "movies from the 70's"
+        decade_patterns = [
+            r"(\d0)s\s+(?:movies|films)",  # "90s movies"
+            r"(\d{3}0)s\s+(?:movies|films)",  # "1990s movies"
+            r"(?:movies|films)\s+from\s+the\s+(\d0)(?:'s|s)",  # "movies from the 80's"
+            r"(?:movies|films)\s+from\s+the\s+(\d{3}0)(?:'s|s)",  # "movies from the 1980's"
+        ]
+        
+        for pattern in decade_patterns:
+            match = re.search(pattern, query.lower())
+            if match:
+                decade = match.group(1)
+                # Convert to full decade (80 -> 1980, 90 -> 1990)
+                if len(decade) == 2:
+                    if int(decade) <= 20:  # Assume 00s, 10s, 20s refer to 2000s, 2010s, 2020s
+                        decade = "20" + decade
+                    else:
+                        decade = "19" + decade
+                return int(decade)
+        
+        return None
+
+    def _clean_search_prefixes(self, query):
+        """Remove common search prefixes like 'show me', 'recommend', etc."""
+        prefixes = [
+            r"^show me\s+",
+            r"^find\s+",
+            r"^recommend\s+",
+            r"^suggest\s+",
+            r"^i want to watch\s+",
+            r"^i want to see\s+",
+            r"^i'm looking for\s+",
+            r"^i am looking for\s+",
+        ]
+        
+        cleaned = query
+        for prefix in prefixes:
+            cleaned = re.sub(prefix, "", cleaned, flags=re.IGNORECASE)
+        
+        return cleaned
+
+    def _correct_movie_terms(self, query):
+        """
+        Correct common misspellings in movie searches
+        """
+        common_terms = {
+            "marvle": "marvel",
+            "starwars": "star wars",
+            "harry poter": "harry potter",
+            "jurrasic": "jurassic",
+            "batmen": "batman",
+            "lordoftherings": "lord of the rings",
+            "pirates of caribean": "pirates of caribbean",
+            "fast and furios": "fast and furious",
+            "avengrs": "avengers",
+            "bollywod": "bollywood",
+            "holywood": "hollywood",
+            "comdy": "comedy",
+            "acton": "action",
+            "horrer": "horror",
+            "scifi": "sci-fi",
+            "romcom": "romantic comedy",
+            "syfy": "sci-fi",
+        }
+        
+        corrected = query
+        for misspelled, correct in common_terms.items():
+            # Use word boundary to match whole words
+            pattern = r'\b' + re.escape(misspelled) + r'\b'
+            corrected = re.sub(pattern, correct, corrected, flags=re.IGNORECASE)
+        
+        return corrected
+
+    def _expand_query(self, query):
+        """
+        Expand query with semantically related terms for better matching
+        """
+        expansions = {
+            "scary": ["horror", "thriller", "suspense", "frightening", "terror"],
+            "kids": ["family", "animation", "disney", "pixar", "children", "child-friendly"],
+            "sad": ["drama", "tragedy", "emotional", "tearjerker", "heartbreaking"],
+            "superhero": ["marvel", "dc", "comic", "avengers", "superpower", "hero"],
+            "funny": ["comedy", "humor", "laugh", "hilarious", "gag", "joke"],
+            "space": ["sci-fi", "science fiction", "alien", "outer space", "interstellar", "galaxy"],
+            "war": ["battle", "military", "army", "soldier", "combat", "warfare"],
+            "romantic": ["romance", "love story", "relationship", "love", "date", "couple"],
+            "detective": ["mystery", "crime", "investigation", "sleuth", "whodunit", "thriller"],
+            "musical": ["music", "song", "dance", "singing", "broadway"],
+            "historical": ["history", "period", "era", "ancient", "medieval", "century"],
+            "college": ["university", "campus", "school", "student", "teen", "young adult"],
+            "family": ["kids", "children", "parents", "home", "family-friendly"],
+        }
+        
+        expanded_terms = []
+        query_lower = query.lower()
+        
+        for term, synonyms in expansions.items():
+            if term in query_lower:
+                expanded_terms.extend(synonyms)
+        
+        if expanded_terms:
+            expanded_query = f"{query} {' '.join(expanded_terms)}"
+            return expanded_query
+        
+        return query
 
     def get_movie_recommendations(self, movie_id, limit=10, language=None):
         """Get movie recommendations based on a specific movie"""
@@ -919,6 +1187,88 @@ class MovieRecommender:
                 break
 
         return recommendations
+    @lru_cache(maxsize=100)
+    def _get_search_results_cached(self, query, limit, language):
+        """Cached version of search to improve performance for repeated queries"""
+        return self.search_movies(query, limit, language)
+
+    def search_movies_enhanced(self, query, limit=10, language=None):
+        """
+        Enhanced search with query expansion, spelling correction, and caching
+        """
+        # Check if query has common misspellings of popular movie terms
+        corrected_query = self._correct_movie_terms(query)
+        if corrected_query != query:
+            print(f"Corrected query: '{query}' to '{corrected_query}'")
+            query = corrected_query
+        
+        # First try the cache
+        cache_key = f"{query}_{limit}_{language}"
+        cache_results = self._search_cache.get(cache_key)
+        if cache_results:
+            return cache_results
+        
+        # Perform standard search
+        results = self.search_movies(query, limit, language)
+        
+        # Store in cache (with a cap on cache size)
+        if len(self._search_cache) > 1000:  # Limit cache size
+            self._search_cache.clear()
+        self._search_cache[cache_key] = results
+        
+        return results
+
+    def _correct_movie_terms(self, query):
+        """
+        Correct common misspellings in movie searches
+        """
+        common_terms = {
+            "marvle": "marvel",
+            "starwars": "star wars",
+            "harry poter": "harry potter",
+            "jurrasic": "jurassic",
+            "batmen": "batman",
+            "lordoftherings": "lord of the rings",
+            "pirates of caribean": "pirates of caribbean",
+            "fast and furios": "fast and furious",
+            "avengrs": "avengers",
+        }
+        
+        corrected = query
+        for misspelled, correct in common_terms.items():
+            # Use word boundary to match whole words
+            pattern = r'\b' + re.escape(misspelled) + r'\b'
+            corrected = re.sub(pattern, correct, corrected, flags=re.IGNORECASE)
+        
+        return corrected
+
+    def _expand_query(self, query):
+        """
+        Expand query with synonyms for better matching
+        """
+        expansions = {
+            "scary": ["horror", "thriller", "suspense"],
+            "kids": ["family", "animation", "disney", "pixar"],
+            "sad": ["drama", "tragedy"],
+            "superhero": ["marvel", "dc", "comic", "avengers"],
+            "funny": ["comedy", "humor", "laugh"],
+            "space": ["sci-fi", "science fiction", "alien"],
+            "war": ["battle", "military", "army", "soldier"],
+        }
+        
+        expanded_terms = []
+        query_lower = query.lower()
+        
+        for term, synonyms in expansions.items():
+            if term in query_lower:
+                expanded_terms.extend(synonyms)
+        
+        if expanded_terms:
+            expanded_query = f"{query} {' '.join(expanded_terms)}"
+            print(f"Expanded query: '{query}' to '{expanded_query}'")
+            return expanded_query
+        
+        return query
 
     def _get_random_recommendations(self, limit=10, language=None):
         """Get random movie recommendations with optional language filter"""
@@ -974,14 +1324,22 @@ def get_trailer(movie_id):
         return jsonify({"error": str(e)}), 500
 
 @app.route("/api/search", methods=["GET"])
-def search():
-    """API endpoint for searching movies"""
-    query = request.args.get("query", "")
+def search_movies():
+    """API endpoint for searching movies with advanced NLP"""
+    query = request.args.get("query", "").strip()
     limit = int(request.args.get("limit", 10))
     language = request.args.get("language", None)
-
-    results = recommender.search_movies(query, limit, language)
-    return jsonify(results)
+    
+    if not query:
+        return jsonify(recommender._get_random_recommendations(limit, language))
+    
+    try:
+        # Use search_movies_enhanced instead of trying to parse the query separately
+        results = recommender.search_movies_enhanced(query, limit, language)
+        return jsonify(results)
+    except Exception as e:
+        print(f"Error during search: {str(e)}")
+        return jsonify({"error": f"Search failed: {str(e)}"}), 500
 
 
 @app.route("/api/recommend", methods=["GET"])

@@ -4,7 +4,10 @@
 
 ![Built with Flask](https://img.shields.io/badge/Built%20With-Flask-blue?logo=flask&logoColor=white)
 ![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
+<a href="https://render.com/deploy" target="_blank">
+  <img src="https://img.shields.io/badge/Deploy_to_Render-Click_Here-blue?style=for-the-badge&logo=cloudinary" alt="Deploy to Render"/>
+</a>
+
 
 ---
 

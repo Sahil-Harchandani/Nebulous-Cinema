@@ -19,15 +19,26 @@
 
 ---
 
-## Try It Now
+## 🚀 Try It Now
 
-Here's a quick look at Nebulous Cinema in action:
+Here's a quick look at **Nebulous Cinema** in action:
 
-  ![Screenshot 2025-04-19 203050](https://github.com/user-attachments/assets/41d76e86-ccfc-4e6a-b986-40c6250ee4c3)
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/41d76e86-ccfc-4e6a-b986-40c6250ee4c3" alt="Nebulous Cinema Screenshot" style="border-radius: 12px; max-width: 90%;"/>
+</p>
 
->  You can deploy it instantly using the button below:
+<p align="center">
+  <em>Lights. Camera. Launch your own Nebulous Cinema experience today!</em>
+</p>
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
+<p align="center">
+  <a href="https://render.com/deploy" target="_blank">
+    <img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render" height="33" style="margin-right: 20px;"/>
+  </a>
+  <a href="https://nebulous-cinema.onrender.com/" target="_blank">
+    <img src="https://img.shields.io/badge/Launch-Nebulous%20Cinema-brightgreen?style=for-the-badge&logo=rocket" alt="Visit Nebulous Cinema" height="33">
+  </a>
+</p>
 
 ---
 

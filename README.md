@@ -27,7 +27,7 @@
 Here's a quick look at **Nebulous Cinema** in action:
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/41d76e86-ccfc-4e6a-b986-40c6250ee4c3" alt="Nebulous Cinema Screenshot" style="border-radius: 12px; max-width: 90%;"/>
+  <img src="https://github.com/user-attachments/assets/41d76e86-ccfc-4e6a-b986-40c6250ee4c3" alt="Nebulous Cinema Screenshot" style="border-radius: 12px; width: 75%;"/>
 </p>
 
 <p align="center">
@@ -111,9 +111,10 @@ python app.py
 
 ##  Screenshots
 
- ![Screenshot 2025-04-19 203225](https://github.com/user-attachments/assets/f6263411-0dde-4d2b-90f5-1108091e1aec)
-
- ![Screenshot 2025-04-19 203148](https://github.com/user-attachments/assets/d3d93aeb-637d-4c42-b9ad-bead84cc82fb)
+ <p float="left">
+  <img src="https://github.com/user-attachments/assets/f6263411-0dde-4d2b-90f5-1108091e1aec" width="45%" alt="Demo1"/>
+  <img src="https://github.com/user-attachments/assets/d3d93aeb-637d-4c42-b9ad-bead84cc82fb" width="45%" alt="Demo2"/>
+</p>
 
 ---
 
